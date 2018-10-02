@@ -166,9 +166,11 @@ class CognitoClient
      * @throws TokenExpiryException
      * @throws TokenVerificationException
      */
-    public function changePassword($accessToken, $previousPassword, $proposedPassword)
+    public function changePassword($accessToken, $previousPassword, $proposedPassword, $verifyToken = False)
     {
-        $this->verifyAccessToken($accessToken);
+        if($verifyToken){
+            $this->verifyAccessToken($accessToken);
+        }
 
         try {
             $this->client->changePassword([
@@ -211,12 +213,7 @@ class CognitoClient
     public function createUser($username, $email, $tempPassword, $attributes = [])
     {
         try {
-            $userAttributes = [];
-            if ($attributes) {
-                foreach ($attributes as $key => $value) {
-                    $userAttributes[] = ["Name" => $key, "Value" => $value];
-                }
-            }
+            $userAttributes = $this->buildAttributesArray($attributes);
 
             $response = $this->client->adminCreateUser([
                 'TemporaryPassword' => $tempPassword,
@@ -317,6 +314,33 @@ class CognitoClient
                 'UserPoolId' => $this->userPoolId,
                 'Username' => $username
             ]);
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
+    /**
+     * @param $description
+     * @param $groupName
+     * @param $precedence
+     * @param $roleArn
+     * @throws Exception
+     */
+    public function createGroup($description, $groupName, $precedence, $roleArn) {
+        try {
+            $requestArray = [
+                'Description' => $description,
+                'GroupName' => $groupName,
+                'UserPoolId' => $this->userPoolId
+            ];
+            if($precedence != null){
+                $requestArray['Precedence'] = $precedence;
+            }
+            if($roleArn != null){
+                $requestArray['RoleArn'];
+            }
+            $result = $this->client->createGroup($requestArray);
+            return $result->toArray();
         } catch (CognitoIdentityProviderException $e) {
             throw CognitoResponseException::createFromCognitoException($e);
         }
