@@ -1,3 +1,5 @@
+Extending pmill/aws-cognito with few more methods, and slightly modifying some existing ones.
+
 pmill/aws-cognito
 =================
 
