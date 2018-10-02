@@ -200,6 +200,42 @@ class CognitoClient
         }
     }
 
+    /**
+     * @param $username
+     * @param $email
+     * @param $tempPassword
+     * @param array $attributes
+     * @return array
+     * @throws Exception
+     */
+    public function createUser($username, $email, $tempPassword, $attributes = [])
+    {
+        try {
+            $userAttributes = [];
+            if ($attributes) {
+                foreach ($attributes as $key => $value) {
+                    $userAttributes[] = ["Name" => $key, "Value" => $value];
+                }
+            }
+
+            $response = $this->client->adminCreateUser([
+                'TemporaryPassword' => $tempPassword,
+                'UserAttributes' => $userAttributes,
+                'Username' => $username,
+                'UserPoolId' => $this->userPoolId,
+                'ValidationData' => [
+                    [
+                        'Name' => 'email',
+                        'Value' => $email,
+                    ],
+                ],
+            ]);
+            return $response->toArray();
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
     /*
      * @param string $username
      * @return AwsResult
@@ -232,6 +268,54 @@ class CognitoClient
         try {
             $this->client->deleteUser([
                 'AccessToken' => $accessToken,
+            ]);
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
+    /**
+     * @param $username
+     * @throws Exception
+     */
+    public function deleteUserAsAdmin($username)
+    {
+        try {
+            $this->client->adminDeleteUser([
+                'UserPoolId' => $this->userPoolId,
+                'Username' => $username
+            ]);
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
+    /**
+     * @param $username
+     * @throws Exception
+     */
+    public function enableUser($username)
+    {
+        try {
+            $this->client->adminEnableUser([
+                'UserPoolId' => $this->userPoolId,
+                'Username' => $username
+            ]);
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
+    /**
+     * @param $username
+     * @throws Exception
+     */
+    public function disableUser($username)
+    {
+        try {
+            $this->client->adminDisableUser([
+                'UserPoolId' => $this->userPoolId,
+                'Username' => $username
             ]);
         } catch (CognitoIdentityProviderException $e) {
             throw CognitoResponseException::createFromCognitoException($e);
