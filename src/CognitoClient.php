@@ -71,16 +71,15 @@ class CognitoClient
     {
         try {
             $response = $this->client->adminInitiateAuth([
-                'AuthFlow' => 'ADMIN_NO_SRP_AUTH',
-                'AuthParameters' => [
-                    'USERNAME' => $username,
-                    'PASSWORD' => $password,
-                    'SECRET_HASH' => $this->cognitoSecretHash($username),
-                ],
-                'ClientId' => $this->appClientId,
+                "AuthFlow" => "ADMIN_NO_SRP_AUTH",
+                "ClientId" => $this->appClientId,
                 'UserPoolId' => $this->userPoolId,
+                "AuthParameters" => [
+                    "USERNAME" => $username,
+                    "PASSWORD" => $password,
+                    "SECRET_HASH" => $this->cognitoSecretHash($username),
+                ],
             ]);
-
             return $this->handleAuthenticateResponse($response->toArray());
         } catch (CognitoIdentityProviderException $e) {
             throw CognitoResponseException::createFromCognitoException($e);
@@ -214,7 +213,7 @@ class CognitoClient
                 'Username' => $username,
                 'UserPoolId' => $this->userPoolId,
             ]);
-            return $response['data'];
+            return $response->toArray();
         } catch (Exception $e) {
             throw CognitoResponseException::createFromCognitoException($e);
         }
@@ -241,12 +240,62 @@ class CognitoClient
 
     /**
      * @param string $username
+     * @throws Exception
+     */
+    public function getGroup($group) {
+        try {
+            $response = $this->client->getGroup([
+                'UserPoolId' => $this->userPoolId,
+                'GroupName' => $group,
+            ]);
+            return $response->toArray();
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
+    /**
+     * @param string $username
+     * @throws Exception
+     */
+    public function getGroupMembers($group) {
+        try {
+            $response = $this->client->listUsersInGroup([
+                'UserPoolId' => $this->userPoolId,
+                'GroupName' => $group,
+            ]);
+            return $response->toArray();
+            return $response->toArray();
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
+    /**
+     * @param string $username
      * @param string $groupName
      * @throws Exception
      */
     public function addUserToGroup($username, $groupName) {
         try {
-            $this->client->adminAddUserToGroup([
+            $this->client->admin([
+                'UserPoolId' => $this->userPoolId,
+                'Username' => $username,
+                "GroupName" => $groupName
+            ]);
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
+    /**
+     * @param string $username
+     * @param string $groupName
+     * @throws Exception
+     */
+    public function removeUserFromGroup($username, $groupName) {
+        try {
+            $this->client->adminRemoveUserFromGroup([
                 'UserPoolId' => $this->userPoolId,
                 'Username' => $username,
                 "GroupName" => $groupName
@@ -305,7 +354,7 @@ class CognitoClient
         $url = sprintf(
             'https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json',
             $this->region,
-            $this->userPoolId
+            $this->userPoolIdadminGetUser
         );
 
         return file_get_contents($url);
