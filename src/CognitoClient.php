@@ -10,6 +10,7 @@ use Jose\Component\Core\JWKSet;
 use Jose\Component\Signature\Algorithm\RS256;
 use Jose\Component\Signature\JWSVerifier;
 use Jose\Component\Signature\Serializer\CompactSerializer;
+use phpDocumentor\Reflection\Types\Null_;
 use pmill\AwsCognito\Exception\ChallengeException;
 use pmill\AwsCognito\Exception\CognitoResponseException;
 use pmill\AwsCognito\Exception\TokenExpiryException;
@@ -233,11 +234,10 @@ class CognitoClient
         }
     }
 
-    /*
-     * @param string $username
-     * @return AwsResult
-     * @throws UserNotFoundException
-     * @throws CognitoResponseException
+    /**
+     * @param $username
+     * @return array
+     * @throws Exception
      */
     public function getUser($username)
     {
@@ -247,7 +247,29 @@ class CognitoClient
                 'UserPoolId' => $this->userPoolId,
             ]);
             return $response->toArray();
-        } catch (Exception $e) {
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
+
+    public function getUsers($attributes = [], $filter = null, $limit = null, $paginationToken = null)
+    {
+        try {
+            $paramsArray = ['AttributesToGet' => $attributes, 'UserPoolId' => $this->userPoolId];
+            if ($filter) {
+                $paramsArray[] = ['Filter' => $filter];
+            }
+            if ($limit) {
+                $paramsArray[] = ['Limit' => $limit];
+            }
+            if ($paginationToken) {
+                $paramsArray[] = ['PaginationToken' => $paginationToken];
+            }
+
+            $result = $this->client->listUsers($paramsArray);
+            return $result->toArray();
+        } catch (CognitoIdentityProviderException $e) {
             throw CognitoResponseException::createFromCognitoException($e);
         }
     }
@@ -326,7 +348,8 @@ class CognitoClient
      * @param $roleArn
      * @throws Exception
      */
-    public function createGroup($description, $groupName, $precedence, $roleArn) {
+    public function createGroup($description, $groupName, $precedence, $roleArn)
+    {
         try {
             $requestArray = [
                 'Description' => $description,
@@ -346,11 +369,25 @@ class CognitoClient
         }
     }
 
+    public function deleteGroup($groupname)
+    {
+        try {
+            $result = $this->client->deleteGroup([
+                'GroupName' => $groupname,
+                'UserPoolId' => $this->userPoolId
+            ]);
+            return $result->toArray();
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
     /**
      * @param string $username
      * @throws Exception
      */
-    public function getGroup($group) {
+    public function getGroup($group)
+    {
         try {
             $response = $this->client->getGroup([
                 'UserPoolId' => $this->userPoolId,
@@ -363,16 +400,39 @@ class CognitoClient
     }
 
     /**
+     * @param null $limit
+     * @param null $nextToken
+     * @return array
+     */
+    public function getGroups($limit = null, $nextToken = null)
+    {
+        try {
+            $paramsArray = [];
+            if ($limit) {
+                $paramsArray['Limit'] = $limit;
+            }
+            if ($nextToken) {
+                $paramsArray['NextToken'] = $nextToken;
+            }
+            $paramsArray['UserPoolId'] = $this->userPoolId;
+            $response = $this->client->listGroups($paramsArray);
+            return $response->toArray();
+        } catch (CognitoIdentityProviderException $e) {
+            throw CognitoResponseException::createFromCognitoException($e);
+        }
+    }
+
+    /**
      * @param string $username
      * @throws Exception
      */
-    public function getGroupMembers($group) {
+    public function getGroupMembers($group)
+    {
         try {
             $response = $this->client->listUsersInGroup([
                 'UserPoolId' => $this->userPoolId,
                 'GroupName' => $group,
             ]);
-            return $response->toArray();
             return $response->toArray();
         } catch (CognitoIdentityProviderException $e) {
             throw CognitoResponseException::createFromCognitoException($e);
@@ -384,7 +444,8 @@ class CognitoClient
      * @param string $groupName
      * @throws Exception
      */
-    public function addUserToGroup($username, $groupName) {
+    public function addUserToGroup($username, $groupName)
+    {
         try {
             $this->client->admin([
                 'UserPoolId' => $this->userPoolId,
@@ -401,7 +462,8 @@ class CognitoClient
      * @param string $groupName
      * @throws Exception
      */
-    public function removeUserFromGroup($username, $groupName) {
+    public function removeUserFromGroup($username, $groupName)
+    {
         try {
             $this->client->adminRemoveUserFromGroup([
                 'UserPoolId' => $this->userPoolId,
