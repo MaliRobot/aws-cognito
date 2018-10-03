@@ -1,7 +1,7 @@
 <?php
-use pmill\AwsCognito\CognitoClient;
-use pmill\AwsCognito\Exception\ChallengeException;
-use pmill\AwsCognito\Exception\PasswordResetRequiredException;
+use malirobot\AwsCognito\CognitoClient;
+use malirobot\AwsCognito\Exception\ChallengeException;
+use malirobot\AwsCognito\Exception\PasswordResetRequiredException;
 
 /** @var CognitoClient $client */
 $client = require(__DIR__ . '/bootstrap.php');
@@ -18,5 +18,3 @@ try {
 } catch (PasswordResetRequiredException $e) {
     die("PASSWORD RESET REQUIRED");
 }
-
-var_dump($authenticationResponse);

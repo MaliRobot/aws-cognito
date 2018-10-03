@@ -1,5 +1,5 @@
 <?php
-namespace pmill\AwsCognito\Exception;
+namespace malirobot\AwsCognito\Exception;
 
 class TokenExpiryException extends \Exception
 {

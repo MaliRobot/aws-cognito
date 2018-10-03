@@ -1,13 +1,13 @@
 {
-  "name": "pmill/aws-cognito",
-  "description": "A PHP client for AWS Cognito user pools",
+  "name": "malirobot/aws-cognito",
+  "description": "A PHP client for AWS Cognito user pools, version of pmill/aws-cognito with added methods and some changes.",
   "keywords": ["php", "authentication", "aws", "cognito", "api"],
-  "homepage": "https://github.com/pmill/aws-cognito",
+  "homepage": "https://github.com/malirobot/aws-cognito",
   "license": "MIT",
   "authors": [
     {
-      "name": "pmill",
-      "email": "dev.pmill@gmail.com"
+      "name": "malirobot",
+      "email": "milos.trifunovic@gmail.com"
     }
   ],
   "require": {
@@ -15,6 +15,6 @@
     "web-token/jwt-signature": "^1.0"
   },
   "autoload": {
-    "psr-4": {"pmill\\AwsCognito\\": "src/"}
+    "psr-4": {"malirobot\\AwsCognito\\": "src/"}
   }
 }

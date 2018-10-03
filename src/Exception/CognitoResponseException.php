@@ -1,5 +1,5 @@
 <?php
-namespace pmill\AwsCognito\Exception;
+namespace malirobot\AwsCognito\Exception;
 
 use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
 use Exception;
@@ -22,7 +22,7 @@ class CognitoResponseException extends Exception
      */
     public static function createFromCognitoException(CognitoIdentityProviderException $e)
     {
-        $errorClass = "pmill\\AwsCognito\\Exception\\" . $e->getAwsErrorCode();
+        $errorClass = "malirobot\\AwsCognito\\Exception\\" . $e->getAwsErrorCode();
 
         if (class_exists($errorClass)) {
             return new $errorClass($e);

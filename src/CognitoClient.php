@@ -1,5 +1,5 @@
 <?php
-namespace pmill\AwsCognito;
+namespace malirobot\AwsCognito;
 
 use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient;
 use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
@@ -11,10 +11,10 @@ use Jose\Component\Signature\Algorithm\RS256;
 use Jose\Component\Signature\JWSVerifier;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 use phpDocumentor\Reflection\Types\Null_;
-use pmill\AwsCognito\Exception\ChallengeException;
-use pmill\AwsCognito\Exception\CognitoResponseException;
-use pmill\AwsCognito\Exception\TokenExpiryException;
-use pmill\AwsCognito\Exception\TokenVerificationException;
+use malirobot\AwsCognito\Exception\ChallengeException;
+use malirobot\AwsCognito\Exception\CognitoResponseException;
+use malirobot\AwsCognito\Exception\TokenExpiryException;
+use malirobot\AwsCognito\Exception\TokenVerificationException;
 
 class CognitoClient
 {
