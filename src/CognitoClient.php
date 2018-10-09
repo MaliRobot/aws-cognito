@@ -524,7 +524,7 @@ class CognitoClient
         $url = sprintf(
             'https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json',
             $this->region,
-            $this->userPoolIdadminGetUser
+            $this->userPoolId
         );
 
         return file_get_contents($url);
