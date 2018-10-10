@@ -179,8 +179,9 @@ class CognitoClient
                 'PreviousPassword' => $previousPassword,
                 'ProposedPassword' => $proposedPassword,
             ]);
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+            return ["success" => "password changed"];
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -229,8 +230,8 @@ class CognitoClient
                 ],
             ]);
             return $response->toArray();
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (\Exception $e) {
+            return ['error' => $e->getMessage()];
         }
     }
 
@@ -304,8 +305,9 @@ class CognitoClient
                 'UserPoolId' => $this->userPoolId,
                 'Username' => $username
             ]);
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+            return ["success" => "user deleted"];
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -572,8 +574,9 @@ class CognitoClient
                 'SecretHash' => $this->cognitoSecretHash($username),
                 'Username' => $username,
             ]);
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+            return ["success" => "reset password request sent"];
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -606,8 +609,9 @@ class CognitoClient
                 'SecretHash' => $this->cognitoSecretHash($username),
                 'Username' => $username,
             ]);
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+            return ["success" => "password request submitted"];
+        } catch (\Exception $e) {
+            return $e->getMessage();
         }
     }
 
