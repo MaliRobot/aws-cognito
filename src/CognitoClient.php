@@ -82,8 +82,8 @@ class CognitoClient
                 ],
             ]);
             return $this->handleAuthenticateResponse($response->toArray());
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -107,8 +107,8 @@ class CognitoClient
             ]);
 
             return $this->handleAuthenticateResponse($response->toArray());
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -248,8 +248,8 @@ class CognitoClient
                 'UserPoolId' => $this->userPoolId,
             ]);
             return $response->toArray();
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -270,8 +270,8 @@ class CognitoClient
 
             $result = $this->client->listUsers($paramsArray);
             return $result->toArray();
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -366,8 +366,8 @@ class CognitoClient
             }
             $result = $this->client->createGroup($requestArray);
             return $result->toArray();
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -379,8 +379,8 @@ class CognitoClient
                 'UserPoolId' => $this->userPoolId
             ]);
             return $result->toArray();
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -396,8 +396,8 @@ class CognitoClient
                 'GroupName' => $group,
             ]);
             return $response->toArray();
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -419,8 +419,8 @@ class CognitoClient
             $paramsArray['UserPoolId'] = $this->userPoolId;
             $response = $this->client->listGroups($paramsArray);
             return $response->toArray();
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
@@ -436,8 +436,8 @@ class CognitoClient
                 'GroupName' => $group,
             ]);
             return $response->toArray();
-        } catch (CognitoIdentityProviderException $e) {
-            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
     }
 
