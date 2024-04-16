@@ -14,7 +14,7 @@
     "php": "^8.1",
     "aws/aws-sdk-php": "^3.304",
     "web-token/jwt-signature": "^3.4",
-    "web-token/jwt-library": "^3.4"
+    "web-token/jwt-framework": "^3.4"
   },
   "autoload": {
     "psr-4": {"malirobot\\AwsCognito\\": "src/"}
