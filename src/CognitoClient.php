@@ -1,20 +1,20 @@
 <?php
+
 namespace malirobot\AwsCognito;
 
-use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient;
-use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
 use Exception;
+use malirobot\AwsCognito\Exception\ChallengeException;
+use malirobot\AwsCognito\Exception\TokenExpiryException;
+use malirobot\AwsCognito\Exception\CognitoResponseException;
+use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient;
+use malirobot\AwsCognito\Exception\TokenVerificationException;
+use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
 use Jose\Component\Core\AlgorithmManager;
-use Jose\Component\Core\Converter\StandardConverter;
 use Jose\Component\Core\JWKSet;
+use Jose\Component\KeyManagement\JWKFactory;
 use Jose\Component\Signature\Algorithm\RS256;
 use Jose\Component\Signature\JWSVerifier;
 use Jose\Component\Signature\Serializer\CompactSerializer;
-use phpDocumentor\Reflection\Types\Null_;
-use malirobot\AwsCognito\Exception\ChallengeException;
-use malirobot\AwsCognito\Exception\CognitoResponseException;
-use malirobot\AwsCognito\Exception\TokenExpiryException;
-use malirobot\AwsCognito\Exception\TokenVerificationException;
 
 class CognitoClient
 {
@@ -169,7 +169,7 @@ class CognitoClient
      */
     public function changePassword($accessToken, $previousPassword, $proposedPassword, $verifyToken = False)
     {
-        if($verifyToken){
+        if ($verifyToken) {
             $this->verifyAccessToken($accessToken);
         }
 
@@ -358,10 +358,10 @@ class CognitoClient
                 'GroupName' => $groupName,
                 'UserPoolId' => $this->userPoolId
             ];
-            if($precedence != null){
+            if ($precedence != null) {
                 $requestArray['Precedence'] = $precedence;
             }
-            if($roleArn != null){
+            if ($roleArn != null) {
                 $requestArray['RoleArn'];
             }
             $result = $this->client->createGroup($requestArray);
@@ -662,23 +662,41 @@ class CognitoClient
      */
     public function decodeAccessToken($accessToken)
     {
-        $algorithmManager = AlgorithmManager::create([
-            new RS256(),
-        ]);
-
-        $serializerManager = new CompactSerializer(new StandardConverter());
-
-        $jws = $serializerManager->unserialize($accessToken);
-        $jwsVerifier = new JWSVerifier(
-            $algorithmManager
+        // Create the secret key
+        $secretKey = $this->downloadJwtWebKeys();
+        // Create a JWK (JSON Web Key) object from the secret key
+        $jwk = JWKFactory::createFromJsonObject(
+            $secretKey
         );
 
-        $keySet = $this->getJwtWebKeys();
-        if (!$jwsVerifier->verifyWithKeySet($jws, $keySet, 0)) {
-            throw new TokenVerificationException('could not verify token');
-        }
+        // Initialize the AlgorithmManager
+        $algorithmManager = new AlgorithmManager([new RS256()]);
 
-        return json_decode($jws->getPayload(), true);
+        // Create the JWSVerifier
+        $jwsVerifier = new JWSVerifier($algorithmManager);
+
+        // Create the CompactSerializer
+        $serializer = new CompactSerializer();
+
+        try {
+            // Deserialize the JWT token
+            $jws = $serializer->unserialize($accessToken);
+
+            // Validate the JWT token using the public key
+            if ($jwsVerifier->verifyWithKey($jws, $jwk, 0)) {
+            // The JWT token is valid
+            // Extract the payload
+            $payload = json_decode($jws->getPayload(), true);
+            } else {
+            // The JWT token is not valid
+            $payload = [];
+            }
+        } catch (\Exception $e) {
+            // Error handling
+            throw new TokenVerificationException('Invalid token');
+        }
+        
+        return $payload;
     }
 
     /**
