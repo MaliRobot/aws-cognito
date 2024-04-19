@@ -3,18 +3,20 @@
 namespace malirobot\AwsCognito;
 
 use Exception;
+use GuzzleHttp\Client;
+use Jose\Component\Core\JWKSet;
+use Jose\Component\Core\AlgorithmManager;
+use Jose\Component\Signature\JWSVerifier;
+use Jose\Component\KeyManagement\JWKFactory;
+use Jose\Component\Signature\Algorithm\RS256;
 use malirobot\AwsCognito\Exception\ChallengeException;
 use malirobot\AwsCognito\Exception\TokenExpiryException;
+use Jose\Component\Signature\Serializer\CompactSerializer;
 use malirobot\AwsCognito\Exception\CognitoResponseException;
 use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient;
 use malirobot\AwsCognito\Exception\TokenVerificationException;
 use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
-use Jose\Component\Core\AlgorithmManager;
-use Jose\Component\Core\JWKSet;
-use Jose\Component\KeyManagement\JWKFactory;
-use Jose\Component\Signature\Algorithm\RS256;
-use Jose\Component\Signature\JWSVerifier;
-use Jose\Component\Signature\Serializer\CompactSerializer;
+use malirobot\AwsCognito\Entity\Provider;
 
 class CognitoClient
 {
@@ -51,6 +53,16 @@ class CognitoClient
     protected $userPoolId;
 
     /**
+     * @var bool
+     */
+    protected $boolClientSecret = false;
+
+    /**
+     *  @var string
+     */
+    protected $appName;
+
+    /**
      * CognitoClient constructor.
      *
      * @param CognitoIdentityProviderClient $client
@@ -71,16 +83,24 @@ class CognitoClient
     public function authenticate($username, $password)
     {
         try {
-            $response = $this->client->adminInitiateAuth([
-                "AuthFlow" => "ADMIN_NO_SRP_AUTH",
-                "ClientId" => $this->appClientId,
-                'UserPoolId' => $this->userPoolId,
-                "AuthParameters" => [
-                    "USERNAME" => $username,
-                    "PASSWORD" => $password,
-                    "SECRET_HASH" => $this->cognitoSecretHash($username),
+            $payload = [
+                'AuthFlow' => 'ADMIN_NO_SRP_AUTH',
+                'AuthParameters' => [
+                    'USERNAME' => $username,
+                    'PASSWORD' => $password
                 ],
-            ]);
+                'ClientId' => $this->appClientId,
+                'UserPoolId' => $this->userPoolId,
+            ];
+
+            //Add Secret Hash in case of Client Secret being configured
+            if ($this->boolClientSecret) {
+                $payload['AuthParameters'] = array_merge($payload['AuthParameters'], [
+                    'SECRET_HASH' => $this->cognitoSecretHash($username)
+                ]);
+            } //End if
+
+            $response = $this->client->adminInitiateAuth($payload);
             return $this->handleAuthenticateResponse($response->toArray());
         } catch (\Exception $e) {
             return ["error" => $e->getMessage()];
@@ -789,5 +809,111 @@ class CognitoClient
             ];
         }
         return $userAttributes;
+    }
+
+    /**
+     * Sets the email verification status for a user.
+     *
+     * @param string $username The username of the user.
+     * @return void
+     */
+    public function setUserEmailVerified($username)
+    {
+        $attributes = [
+            'email_verified' => 'true',
+        ];
+
+        $this->updateUserAttributes($username, $attributes);
+    }
+
+    /**
+     * Sets the password for a user in the Cognito user pool.
+     *
+     * @param string $username The username of the user.
+     * @param string $password The new password for the user.
+     * @param bool $permanent (optional) Whether the password change is permanent. Default is false.
+     * @return void
+     */
+    public function setUserPassword($username, $password, $permanent = false)
+    {
+        $this->client->adminSetUserPassword([
+            'Password' => $password,
+            'Permanent' => $permanent,
+            'Username' => $username,
+            'UserPoolId' => $this->userPoolId,
+        ]);
+    }
+
+
+    /**
+     * Set the value of boolClientSecret
+     */
+    public function setBoolClientSecret(): self
+    {
+        $this->boolClientSecret = true;
+
+        return $this;
+    }
+
+    /**
+     * Authenticates the provider using the given code and redirect URL.
+     *
+     * @param string $code The authentication code.
+     * @param string $redirectUrl The redirect URL.
+     * @param string $scope The scope of the authentication (default: 'email profile openid').
+     * @return array The authentication result.
+     */
+    public function authenticateProvider(string $code, string $redirectUrl, string $scope = 'email profile openid'): array
+    {
+        $data = array(
+            'code' => $code,
+            'client_id' => $this->appClientId,
+            'client_secret' => $this->appClientSecret,
+            'grant_type' => 'authorization_code',
+            'scope' => $scope,
+            'redirect_uri' => $redirectUrl
+        );
+
+        $path = '/oauth2/token' . '?' . http_build_query($data);
+        $client = new Client([
+            'base_uri' => 'https://budgetcontrol.auth.eu-west-1.amazoncognito.com',
+            'headers' => [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ]
+        ]);
+
+        $response = $client->request('POST', $path, $data);
+        $response = $response->getBody();
+        $content = json_decode($response->getContents());
+
+        if(!isset($content['AccessToken'])) {
+            throw new Exception('Invalid token', 400);
+        }
+
+        return $content;
+    }
+    
+
+    /**
+     * Get the value of provider
+     */
+    public function provider()
+    {
+        if(!isset($this->appName)) {
+            throw new \Exception('The app name is required');
+        }
+
+        return new Provider($this->appClientId, $this->region, $this->appName);
+    }
+
+
+    /**
+     * Set the value of appName
+     */
+    public function setAppName($appName): self
+    {
+        $this->appName = $appName;
+
+        return $this;
     }
 }
