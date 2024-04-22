@@ -703,7 +703,7 @@ class CognitoClient
             $jws = $serializer->unserialize($accessToken);
 
             // Validate the JWT token using the public key
-            if ($jwsVerifier->verifyWithKey($jws, $jwk, 0)) {
+            if ($jwsVerifier->verifyWithKey($jws, $jwk->get(0), 0)) {
             // The JWT token is valid
             // Extract the payload
             $payload = json_decode($jws->getPayload(), true);

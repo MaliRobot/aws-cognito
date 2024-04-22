@@ -32,27 +32,14 @@ final class Provider {
     }
 
     /**
-     * Authenticates the user using Google as the identity provider.
+     * Returns the Google provider.
      *
-     * @param string $redirect_uri The URI to redirect the user after authentication.
-     * @return string The authentication URL for Google.
+     * @return string The Google provider.
      */
     public function google(string $redirect_uri) : string
     {
         $authUrl = $redirect_uri;
         return $authUrl . '?' . http_build_query(self::params('google'));
-    }
-
-    /**
-     * Authenticates the user using Facebook.
-     *
-     * @param string $redirect_uri The URI to redirect the user after authentication.
-     * @return string The authentication result.
-     */
-    public function facebook(string $redirect_uri) : string
-    {
-        $authUrl = $redirect_uri;
-        return $authUrl . '?' . http_build_query(self::params('facebook'));
     }
 
     /**
