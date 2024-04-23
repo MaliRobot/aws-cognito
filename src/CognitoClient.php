@@ -690,8 +690,6 @@ class CognitoClient
             $secretKey
         );
 
-        $kid = array_values($jwk->all())[0];
-
         // Initialize the AlgorithmManager
         $algorithmManager = new AlgorithmManager([new RS256()]);
 
@@ -706,7 +704,7 @@ class CognitoClient
             $jws = $serializer->unserialize($accessToken);
 
             // Validate the JWT token using the public key
-            if ($jwsVerifier->verifyWithKey($jws, $kid, 0)) {
+            if ($jwsVerifier->verifyWithKeySet($jws, $jwk, 0)) {
             // The JWT token is valid
             // Extract the payload
             $payload = json_decode($jws->getPayload(), true);
