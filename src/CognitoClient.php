@@ -690,7 +690,7 @@ class CognitoClient
             $secretKey
         );
 
-        $kid = $jwk->all()[0];
+        $kid = array_values($jwk->all())[0];
 
         // Initialize the AlgorithmManager
         $algorithmManager = new AlgorithmManager([new RS256()]);
