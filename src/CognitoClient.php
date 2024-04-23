@@ -713,7 +713,7 @@ class CognitoClient
             }
         } catch (\Exception $e) {
             // Error handling
-            throw new TokenVerificationException('Invalid Access Token token ');
+            throw new TokenVerificationException('Invalid Access Token token '. $e->getMessage());
         }
         
         return $payload;
@@ -757,7 +757,7 @@ class CognitoClient
             }
         } catch (\Exception $e) {
             // Error handling
-            throw new TokenVerificationException('Invalid ID token');
+            throw new TokenVerificationException('Invalid ID token '. $e->getMessage());
         }
         
         return $payload;
