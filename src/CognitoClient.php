@@ -685,9 +685,12 @@ class CognitoClient
         // Create the secret key
         $secretKey = $this->downloadJwtWebKeys();
         // Create a JWK (JSON Web Key) object from the secret key
+        /** @var \Jose\Component\Core\JWKSet $jwk */
         $jwk = JWKFactory::createFromJsonObject(
             $secretKey
         );
+
+        $kid = $jwk->all()[0];
 
         // Initialize the AlgorithmManager
         $algorithmManager = new AlgorithmManager([new RS256()]);
@@ -703,7 +706,7 @@ class CognitoClient
             $jws = $serializer->unserialize($accessToken);
 
             // Validate the JWT token using the public key
-            if ($jwsVerifier->verifyWithKey($jws, $jwk->get(1), 0)) {
+            if ($jwsVerifier->verifyWithKey($jws, $kid, 0)) {
             // The JWT token is valid
             // Extract the payload
             $payload = json_decode($jws->getPayload(), true);
@@ -713,51 +716,7 @@ class CognitoClient
             }
         } catch (\Exception $e) {
             // Error handling
-            throw new TokenVerificationException('Invalid Access Token token '. $e->getMessage());
-        }
-        
-        return $payload;
-    }
-
-    /**
-     * @param string $accessToken
-     * @return array
-     * @throws TokenVerificationException
-     */
-    public function decodeIdToken($accessToken)
-    {
-        // Create the secret key
-        $secretKey = $this->downloadJwtWebKeys();
-        // Create a JWK (JSON Web Key) object from the secret key
-        $jwk = JWKFactory::createFromJsonObject(
-            $secretKey
-        );
-
-        // Initialize the AlgorithmManager
-        $algorithmManager = new AlgorithmManager([new RS256()]);
-
-        // Create the JWSVerifier
-        $jwsVerifier = new JWSVerifier($algorithmManager);
-
-        // Create the CompactSerializer
-        $serializer = new CompactSerializer();
-
-        try {
-            // Deserialize the JWT token
-            $jws = $serializer->unserialize($accessToken);
-
-            // Validate the JWT token using the public key
-            if ($jwsVerifier->verifyWithKey($jws, $jwk->get(0), 0)) {
-            // The JWT token is valid
-            // Extract the payload
-            $payload = json_decode($jws->getPayload(), true);
-            } else {
-            // The JWT token is not valid
-            $payload = [];
-            }
-        } catch (\Exception $e) {
-            // Error handling
-            throw new TokenVerificationException('Invalid ID token '. $e->getMessage());
+            throw new TokenVerificationException('Invalid token');
         }
         
         return $payload;
