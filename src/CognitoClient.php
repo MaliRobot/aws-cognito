@@ -63,6 +63,11 @@ class CognitoClient
     protected $appName;
 
     /**
+     *  @var string
+     */
+    protected $appRedirectUri;
+
+    /**
      * CognitoClient constructor.
      *
      * @param CognitoIdentityProviderClient $client
@@ -904,7 +909,7 @@ class CognitoClient
             throw new \Exception('The app name is required');
         }
 
-        return new Provider($this->appClientId, $this->region, $this->appName);
+        return new Provider($this->appClientId, $this->region, $this->appName, $this->appRedirectUri);
     }
 
 
@@ -914,6 +919,17 @@ class CognitoClient
     public function setAppName($appName): self
     {
         $this->appName = $appName;
+
+        return $this;
+    }
+
+
+    /**
+     * Set the value of appRedirectUri
+     */
+    public function setAppRedirectUri($appRedirectUri): self
+    {
+        $this->appRedirectUri = $appRedirectUri;
 
         return $this;
     }
