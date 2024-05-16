@@ -53,5 +53,27 @@ final class Provider {
     {
         return self::params($provider_name);
     }
+
+
+
+    /**
+     * Generates the URL for a specific provider.
+     *
+     * @param string $providerName The name of the provider.
+     * @return string The URL for the provider.
+     */
+    public static function providerUrl(string $providerName): string 
+    {
+        switch($providerName) {
+            case 'google':
+                return 'https://accounts.google.com/o/oauth2/auth';
+            case 'facebook':
+                return 'https://www.facebook.com/v3.3/dialog/oauth';
+            case 'linkedin':
+                return 'https://www.linkedin.com/oauth/v2/authorization';
+            default:
+                throw new \Exception('Provider not found');
+        }
+    }
     
 }
