@@ -6,12 +6,14 @@ final class Provider {
     private string $appClientId;
     private string $appRegion;
     private string $appName;
+    private string $appRedirectUri;
 
-    public function __construct(string $appClientId,string $appRegion, string $appName)
+    public function __construct(string $appClientId,string $appRegion, string $appName, string $appRedirectUri)
     {
         $this->appClientId = $appClientId;
         $this->appRegion = $appRegion;
         $this->appName = $appName;
+        $this->appRedirectUri = $appRedirectUri;
     }
     /**
      * Retrieves the parameters for a given provider.
@@ -23,7 +25,7 @@ final class Provider {
     {
         return [
             'client_id' => $this->appClientId,
-            'redirect_uri' => "https://".$this->appName.".auth.".$this->appRegion.".amazoncognito.com/oauth2/authorize",
+            'redirect_uri' => $this->appRedirectUri,
             'response_type' => 'code',
             'scope' => 'email profile openid aws.cognito.signin.user.admin',
             'identity_provider' => $provider_name,
@@ -33,12 +35,11 @@ final class Provider {
 
     /**
      * Returns the Google provider.
-     *
+     * @param string $authUrl The URL to authenticate.
      * @return string The Google provider.
      */
-    public function google(string $redirect_uri) : string
+    public function google(string $authUrl) : string
     {
-        $authUrl = $redirect_uri;
         return $authUrl . '?' . http_build_query(self::params('google'));
     }
 
