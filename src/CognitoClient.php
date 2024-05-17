@@ -892,7 +892,7 @@ class CognitoClient
         $response = $response->getBody();
         $content = json_decode($response->getContents());
 
-        if(!isset($content['AccessToken'])) {
+        if(!isset($content->access_token)) {
             throw new Exception('Invalid token', 400);
         }
 
