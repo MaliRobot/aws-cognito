@@ -40,7 +40,7 @@ final class Provider {
      */
     public function google(string $authUrl) : string
     {
-        return $authUrl . '?' . http_build_query(self::params('google'));
+        return $this->authUrl() . '?' . http_build_query(self::params('google'));
     }
 
     /**
@@ -54,26 +54,14 @@ final class Provider {
         return self::params($provider_name);
     }
 
-
-
     /**
-     * Generates the URL for a specific provider.
+     * Returns the authentication URL for the provider.
      *
-     * @param string $providerName The name of the provider.
-     * @return string The URL for the provider.
+     * @return string The authentication URL.
      */
-    public static function providerUrl(string $providerName): string 
+    private function authUrl()
     {
-        switch($providerName) {
-            case 'google':
-                return 'https://accounts.google.com/o/oauth2/auth';
-            case 'facebook':
-                return 'https://www.facebook.com/v3.3/dialog/oauth';
-            case 'linkedin':
-                return 'https://www.linkedin.com/oauth/v2/authorization';
-            default:
-                throw new \Exception('Provider not found');
-        }
+        return 'https://'.$this->appName.'.auth.'.$this->appRegion.'.amazoncognito.com/oauth2/authorize';
     }
     
 }

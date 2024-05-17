@@ -882,7 +882,7 @@ class CognitoClient
 
         $path = '/oauth2/token' . '?' . http_build_query($data);
         $client = new Client([
-            'base_uri' => 'https://budgetcontrol.auth.eu-west-1.amazoncognito.com',
+            'base_uri' => 'https://'.$this->appName.'.auth.'.$this->region.'.amazoncognito.com',
             'headers' => [
                 'Content-Type' => 'application/x-www-form-urlencoded'
             ]
