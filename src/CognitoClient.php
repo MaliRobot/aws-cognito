@@ -17,6 +17,7 @@ use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient;
 use malirobot\AwsCognito\Exception\TokenVerificationException;
 use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
 use malirobot\AwsCognito\Entity\Provider;
+use stdClass;
 
 class CognitoClient
 {
@@ -869,7 +870,7 @@ class CognitoClient
      * @param string $scope The scope of the authentication (default: 'email profile openid').
      * @return array The authentication result.
      */
-    public function authenticateProvider(string $code, string $redirectUrl, string $scope = 'email profile openid'): array
+    public function authenticateProvider(string $code, string $redirectUrl, string $scope = 'email profile openid'): stdClass
     {
         $data = array(
             'code' => $code,
