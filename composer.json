@@ -8,14 +8,21 @@
     {
       "name": "malirobot",
       "email": "milos.trifunovic@gmail.com"
+    },
+    {
+      "name": "Marco De Felice",
+      "email": "marco.defelice@mlabfactory.it"
     }
   ],
   "require": {
-    "php": "^8.2",
-    "aws/aws-sdk-php": "^3.26",
-    "web-token/jwt-signature": "^1.0"
+    "php": "^8.1",
+    "aws/aws-sdk-php": "^3.304",
+    "web-token/jwt-signature": "^3.4",
+    "web-token/jwt-framework": "^3.4",
+    "guzzlehttp/guzzle": "^7.8"
   },
   "autoload": {
     "psr-4": {"malirobot\\AwsCognito\\": "src/"}
-  }
+  },
+  "minimum-stability": "RC"
 }

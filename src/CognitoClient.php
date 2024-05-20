@@ -1,20 +1,23 @@
 <?php
+
 namespace malirobot\AwsCognito;
 
-use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient;
-use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
 use Exception;
-use Jose\Component\Core\AlgorithmManager;
-use Jose\Component\Core\Converter\StandardConverter;
+use GuzzleHttp\Client;
 use Jose\Component\Core\JWKSet;
-use Jose\Component\Signature\Algorithm\RS256;
+use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Signature\JWSVerifier;
-use Jose\Component\Signature\Serializer\CompactSerializer;
-use phpDocumentor\Reflection\Types\Null_;
+use Jose\Component\KeyManagement\JWKFactory;
+use Jose\Component\Signature\Algorithm\RS256;
 use malirobot\AwsCognito\Exception\ChallengeException;
-use malirobot\AwsCognito\Exception\CognitoResponseException;
 use malirobot\AwsCognito\Exception\TokenExpiryException;
+use Jose\Component\Signature\Serializer\CompactSerializer;
+use malirobot\AwsCognito\Exception\CognitoResponseException;
+use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient;
 use malirobot\AwsCognito\Exception\TokenVerificationException;
+use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
+use malirobot\AwsCognito\Entity\Provider;
+use stdClass;
 
 class CognitoClient
 {
@@ -51,6 +54,21 @@ class CognitoClient
     protected $userPoolId;
 
     /**
+     * @var bool
+     */
+    protected $boolClientSecret = false;
+
+    /**
+     *  @var string
+     */
+    protected $appName;
+
+    /**
+     *  @var string
+     */
+    protected $appRedirectUri;
+
+    /**
      * CognitoClient constructor.
      *
      * @param CognitoIdentityProviderClient $client
@@ -71,16 +89,24 @@ class CognitoClient
     public function authenticate($username, $password)
     {
         try {
-            $response = $this->client->adminInitiateAuth([
-                "AuthFlow" => "ADMIN_NO_SRP_AUTH",
-                "ClientId" => $this->appClientId,
-                'UserPoolId' => $this->userPoolId,
-                "AuthParameters" => [
-                    "USERNAME" => $username,
-                    "PASSWORD" => $password,
-                    "SECRET_HASH" => $this->cognitoSecretHash($username),
+            $payload = [
+                'AuthFlow' => 'ADMIN_NO_SRP_AUTH',
+                'AuthParameters' => [
+                    'USERNAME' => $username,
+                    'PASSWORD' => $password
                 ],
-            ]);
+                'ClientId' => $this->appClientId,
+                'UserPoolId' => $this->userPoolId,
+            ];
+
+            //Add Secret Hash in case of Client Secret being configured
+            if ($this->boolClientSecret) {
+                $payload['AuthParameters'] = array_merge($payload['AuthParameters'], [
+                    'SECRET_HASH' => $this->cognitoSecretHash($username)
+                ]);
+            } //End if
+
+            $response = $this->client->adminInitiateAuth($payload);
             return $this->handleAuthenticateResponse($response->toArray());
         } catch (\Exception $e) {
             return ["error" => $e->getMessage()];
@@ -169,7 +195,7 @@ class CognitoClient
      */
     public function changePassword($accessToken, $previousPassword, $proposedPassword, $verifyToken = False)
     {
-        if($verifyToken){
+        if ($verifyToken) {
             $this->verifyAccessToken($accessToken);
         }
 
@@ -358,10 +384,10 @@ class CognitoClient
                 'GroupName' => $groupName,
                 'UserPoolId' => $this->userPoolId
             ];
-            if($precedence != null){
+            if ($precedence != null) {
                 $requestArray['Precedence'] = $precedence;
             }
-            if($roleArn != null){
+            if ($roleArn != null) {
                 $requestArray['RoleArn'];
             }
             $result = $this->client->createGroup($requestArray);
@@ -662,23 +688,42 @@ class CognitoClient
      */
     public function decodeAccessToken($accessToken)
     {
-        $algorithmManager = AlgorithmManager::create([
-            new RS256(),
-        ]);
-
-        $serializerManager = new CompactSerializer(new StandardConverter());
-
-        $jws = $serializerManager->unserialize($accessToken);
-        $jwsVerifier = new JWSVerifier(
-            $algorithmManager
+        // Create the secret key
+        $secretKey = $this->downloadJwtWebKeys();
+        // Create a JWK (JSON Web Key) object from the secret key
+        /** @var \Jose\Component\Core\JWKSet $jwk */
+        $jwk = JWKFactory::createFromJsonObject(
+            $secretKey
         );
 
-        $keySet = $this->getJwtWebKeys();
-        if (!$jwsVerifier->verifyWithKeySet($jws, $keySet, 0)) {
-            throw new TokenVerificationException('could not verify token');
-        }
+        // Initialize the AlgorithmManager
+        $algorithmManager = new AlgorithmManager([new RS256()]);
 
-        return json_decode($jws->getPayload(), true);
+        // Create the JWSVerifier
+        $jwsVerifier = new JWSVerifier($algorithmManager);
+
+        // Create the CompactSerializer
+        $serializer = new CompactSerializer();
+
+        try {
+            // Deserialize the JWT token
+            $jws = $serializer->unserialize($accessToken);
+
+            // Validate the JWT token using the public key
+            if ($jwsVerifier->verifyWithKeySet($jws, $jwk, 0)) {
+            // The JWT token is valid
+            // Extract the payload
+            $payload = json_decode($jws->getPayload(), true);
+            } else {
+            // The JWT token is not valid
+            $payload = [];
+            }
+        } catch (\Exception $e) {
+            // Error handling
+            throw new TokenVerificationException('Invalid token');
+        }
+        
+        return $payload;
     }
 
     /**
@@ -771,5 +816,122 @@ class CognitoClient
             ];
         }
         return $userAttributes;
+    }
+
+    /**
+     * Sets the email verification status for a user.
+     *
+     * @param string $username The username of the user.
+     * @return void
+     */
+    public function setUserEmailVerified($username)
+    {
+        $attributes = [
+            'email_verified' => 'true',
+        ];
+
+        $this->updateUserAttributes($username, $attributes);
+    }
+
+    /**
+     * Sets the password for a user in the Cognito user pool.
+     *
+     * @param string $username The username of the user.
+     * @param string $password The new password for the user.
+     * @param bool $permanent (optional) Whether the password change is permanent. Default is false.
+     * @return void
+     */
+    public function setUserPassword($username, $password, $permanent = false)
+    {
+        $this->client->adminSetUserPassword([
+            'Password' => $password,
+            'Permanent' => $permanent,
+            'Username' => $username,
+            'UserPoolId' => $this->userPoolId,
+        ]);
+    }
+
+
+    /**
+     * Set the value of boolClientSecret
+     */
+    public function setBoolClientSecret(): self
+    {
+        $this->boolClientSecret = true;
+
+        return $this;
+    }
+
+    /**
+     * Authenticates the provider using the given code and redirect URL.
+     *
+     * @param string $code The authentication code.
+     * @param string $redirectUrl The redirect URL.
+     * @param string $scope The scope of the authentication (default: 'email profile openid').
+     * @return array The authentication result.
+     */
+    public function authenticateProvider(string $code, string $redirectUrl, string $scope = 'email profile openid'): stdClass
+    {
+        $data = array(
+            'code' => $code,
+            'client_id' => $this->appClientId,
+            'client_secret' => $this->appClientSecret,
+            'grant_type' => 'authorization_code',
+            'scope' => $scope,
+            'redirect_uri' => $redirectUrl
+        );
+
+        $path = '/oauth2/token' . '?' . http_build_query($data);
+        $client = new Client([
+            'base_uri' => 'https://'.$this->appName.'.auth.'.$this->region.'.amazoncognito.com',
+            'headers' => [
+                'Content-Type' => 'application/x-www-form-urlencoded'
+            ]
+        ]);
+
+        $response = $client->request('POST', $path, $data);
+        $response = $response->getBody();
+        $content = json_decode($response->getContents());
+
+        if(!isset($content->access_token)) {
+            throw new Exception('Invalid token', 400);
+        }
+
+        return $content;
+    }
+    
+
+    /**
+     * Get the value of provider
+     */
+    public function provider()
+    {
+        if(!isset($this->appName)) {
+            throw new \Exception('The app name is required');
+        }
+
+        return new Provider($this->appClientId, $this->region, $this->appName, $this->appRedirectUri);
+    }
+
+
+    /**
+     * Set the value of appName
+     */
+    public function setAppName($appName): self
+    {
+        $this->appName = $appName;
+
+        return $this;
+    }
+
+
+    /**
+     * Set the value of appRedirectUri
+     */
+    public function setAppRedirectUri($appRedirectUri): self
+    {
+        $this->appRedirectUri = $appRedirectUri;
+
+        return $this;
     }
 }
