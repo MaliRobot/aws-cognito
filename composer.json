@@ -4,7 +4,6 @@
   "keywords": ["php", "authentication", "aws", "cognito", "api"],
   "homepage": "https://github.com/malirobot/aws-cognito",
   "license": "MIT",
-  "version": "1.0",
   "authors": [
     {
       "name": "malirobot",
