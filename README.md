@@ -42,9 +42,9 @@ before running them.
 Version History
 ---------------
 
-1.0 (12/06/2024)
+1.0.* (12/06/2024)
 
-*   Update package with PHP^8.1 - [marcodefelice](https://github.com/marcodefelice)
+*   Upgrade library to works with PHP ^8.1 and new AWS Cognito functionalities - [MarcoDeFelice](https://github.com/mlabfactory/aws-cognito)
 
 0.2.7 (17/08/2018)
 

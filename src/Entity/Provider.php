@@ -21,13 +21,15 @@ final class Provider {
      * @param string $provider_name The name of the provider.
      * @return array The parameters for the provider.
      */
-    private function params(string $provider_name): array
+    private function params(string $provider_name, array $scopes = ['openid']): array
     {
+        $scopes = implode(' ', $scopes);
+
         return [
             'client_id' => $this->appClientId,
             'redirect_uri' => $this->appRedirectUri,
             'response_type' => 'code',
-            'scope' => 'email profile openid aws.cognito.signin.user.admin',
+            'scope' => $scopes,
             'identity_provider' => $provider_name,
             'state' => uniqid($this->appName, true),
         ];
@@ -35,10 +37,9 @@ final class Provider {
 
     /**
      * Returns the Google provider.
-     * @param string $authUrl The URL to authenticate.
      * @return string The Google provider.
      */
-    public function google(string $authUrl) : string
+    public function google() : string
     {
         return $this->authUrl() . '?' . http_build_query(self::params('google'));
     }

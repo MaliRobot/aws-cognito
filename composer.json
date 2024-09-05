@@ -11,7 +11,8 @@
     },
     {
       "name": "Marco De Felice",
-      "email": "marco.defelice@mlabfactory.it"
+      "email": "marco.defelice890@gmail.com",
+      "homepage": "https://www.mlabfactory.it"
     }
   ],
   "require": {
@@ -24,5 +25,5 @@
   "autoload": {
     "psr-4": {"malirobot\\AwsCognito\\": "src/"}
   },
-  "minimum-stability": "RC"
+  "minimum-stability": "stable"
 }
