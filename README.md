@@ -42,6 +42,10 @@ before running them.
 Version History
 ---------------
 
+1.0.* (12/06/2024)
+
+*   Upgrade library to works with PHP ^8.1 and new AWS Cognito functionalities - [MarcoDeFelice](https://github.com/mlabfactory/aws-cognito)
+
 0.2.7 (17/08/2018)
 
 *   Added method to get user details - [brettmc](https://github.com/brettmc)
