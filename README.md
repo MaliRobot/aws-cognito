@@ -42,6 +42,10 @@ before running them.
 Version History
 ---------------
 
+1.0 (12/06/2024)
+
+*   Update package with PHP^8.1 - [marcodefelice](https://github.com/marcodefelice)
+
 0.2.7 (17/08/2018)
 
 *   Added method to get user details - [brettmc](https://github.com/brettmc)
