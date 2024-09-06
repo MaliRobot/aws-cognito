@@ -21,7 +21,7 @@ final class Provider {
      * @param string $provider_name The name of the provider.
      * @return array The parameters for the provider.
      */
-    private function params(string $provider_name, array $scopes = ['openid']): array
+    private function params(string $provider_name, array $scopes = ['openid profile email']): array
     {
         $scopes = implode(' ', $scopes);
 
@@ -41,7 +41,7 @@ final class Provider {
      */
     public function google() : string
     {
-        return $this->authUrl() . '?' . http_build_query(self::params('google'));
+        return $this->authUrl() . '?' . http_build_query(self::params('Google'));
     }
 
     /**
