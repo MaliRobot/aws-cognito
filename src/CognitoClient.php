@@ -2,21 +2,22 @@
 
 namespace malirobot\AwsCognito;
 
+use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient;
+use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
 use Exception;
 use GuzzleHttp\Client;
-use Jose\Component\Core\JWKSet;
 use Jose\Component\Core\AlgorithmManager;
-use Jose\Component\Signature\JWSVerifier;
+use Jose\Component\Core\JWKSet;
 use Jose\Component\KeyManagement\JWKFactory;
 use Jose\Component\Signature\Algorithm\RS256;
-use malirobot\AwsCognito\Exception\ChallengeException;
-use malirobot\AwsCognito\Exception\TokenExpiryException;
+use Jose\Component\Signature\JWSVerifier;
 use Jose\Component\Signature\Serializer\CompactSerializer;
-use malirobot\AwsCognito\Exception\CognitoResponseException;
-use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient;
-use malirobot\AwsCognito\Exception\TokenVerificationException;
-use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
 use malirobot\AwsCognito\Entity\Provider;
+use malirobot\AwsCognito\Exception\ChallengeException;
+use malirobot\AwsCognito\Exception\CognitoResponseException;
+use malirobot\AwsCognito\Exception\TokenExpiryException;
+use malirobot\AwsCognito\Exception\TokenVerificationException;
+use malirobot\AwsCognito\Exception\UsernameExistsException;
 use stdClass;
 
 class CognitoClient
@@ -108,7 +109,9 @@ class CognitoClient
 
             $response = $this->client->adminInitiateAuth($payload);
             return $this->handleAuthenticateResponse($response->toArray());
-        } catch (\Exception $e) {
+        } catch (ChallengeException $e) {
+            return ["challenge-request" => true, "challenge-parameters" => $e->getChallengeParameters(), "session" => $e->getSession(), "challenge-name" => $e->getChallengeName()];
+        } catch (Exception $e) {
             return ["error" => $e->getMessage()];
         }
     }
@@ -256,7 +259,13 @@ class CognitoClient
                 ],
             ]);
             return $response->toArray();
-        } catch (\Exception $e) {
+        } catch (CognitoIdentityProviderException $e) {
+             if($e->getAwsErrorShape()->toArray()['name'] === 'UsernameExistsException') {
+                throw new UsernameExistsException($e);
+             };
+
+            throw CognitoResponseException::createFromCognitoException($e);
+        } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
     }
